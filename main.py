@@ -31,7 +31,19 @@ class Entity:
 		return Entity(c)
 
 
+def keyExit(): sys.exit(-2) # quick exit for keyboard interrupt
 def line(): return f"\n{'='*50}\n" # for formatting
+def vertexFound(g, v):
+	try: g.vs.find(id = v)
+	except KeyboardInterrupt: kexit()
+	except Exception: return False
+	return True
+def getConnecting(nodes):
+	nodes = None
+	userInput = ""
+	while(userInput != "e"):
+		...
+	return nodes
 
 try:
 	graph = igraph.Graph(directed = False)
@@ -42,10 +54,10 @@ try:
 		if(userInput != "e" and not os.path.isfile(userInput)): print(f"{userInput} is not a valid file")
 
 	if(userInput == "e"): sys.exit(1)
-	subsetFile = userInput
+	inputFile = userInput
 
-	rawEdges = readFile("input.txt", True)
-	subset = readFile(subsetFile)
+	rawEdges = readFile(inputFile, True)
+	#subset = readFile(subsetFile)
 	edges = list()
 	count = 0
 	vCount = 0
@@ -77,20 +89,27 @@ try:
 		graph.vs[i]["label"] = str(i)
 
 	graph.add_edges(edges)
+	try:
+		#print(f"10 in graph?: {10 in graph.vs}")
+		#print(f"TEST --> id=10: {graph.vs.find(id=10)}\tid=20: {graph.vs.find(id=20)}")
+		print(f"10 in graph?: {vertexFound(graph, 10)}\n20 in graph?: {vertexFound(graph, 20)}")
+	except KeyboardInterrupt: kexit()
+	except Exception as e: print(e)
 
-	# delete me -- this is for viewing that the graph information is correct
-	vs = {}
-	output = "test.png"
-	vs["bbox"] = (400, 400)
-	vs["margin"] = 27
-	vs["vertex_color"] = "white"
-	vs["vertex_size"] = 45
-	vs["vertex_label_size"] = 22
-	vs["edge_curved"] = False
-	layout = graph.layout()
-	vs["layout"] = layout
-	igraph.plot(graph, output, **vs)
-except KeyboardInterrupt: sys.exit(-2)
+	if(not os.path.isfile("test.png")):
+		# delete me -- this is for viewing that the graph information is correct
+		vs = {}
+		output = "test.png"
+		vs["bbox"] = (400, 400)
+		vs["margin"] = 27
+		vs["vertex_color"] = "white"
+		vs["vertex_size"] = 45
+		vs["vertex_label_size"] = 22
+		vs["edge_curved"] = False
+		layout = graph.layout()
+		vs["layout"] = layout
+		igraph.plot(graph, output, **vs)
+except KeyboardInterrupt: kexit()
 except Exception as e:
 	print(e)
 	sys.exit(-1)

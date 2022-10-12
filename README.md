@@ -4,6 +4,7 @@
 ## Table of Contents
 1. Instructions
 2. Directory Contents
+3. Dependencies
 
 ### 1. Instructions
 **ONLY RUN LAUNCHER.PY OR CODER.PY**
@@ -29,3 +30,8 @@ Make sure you do not install a virtual environment. launcher.py will install the
 3. Input.txt
 	- File containing the input Dr. Kim gave us. Can be named anything, program asks for the name at run time
 
+### 3. Dependencies
+1. igraph
+	- Used to make graphs
+2. pycairo
+	- Used for debugging graph, allows for graph to be drawn
