@@ -1,18 +1,35 @@
 import os, sys, igraph
 from utils import *
 
-"""
-def readFile(fn, lines = None):
-	# reads a file, if lines is True: reads file by line, else read as string
-	if not lines in {True, False}: lines = False
-	data = None
-	try:
-		with open(fn) as file:
-			if(lines): data = file.readlines()
-			else: data = file.read()
-	except Exception as e: print(e)
-	return data
-"""
+vars = readJSON("vars.json") # global variables --> easier to change a json file than to dig through code. contains information about genetic algorithm specifically
+
+class Entity:
+	def __init__(self, c): self.__chromosome = c
+	def setChromosome(self, c): self.__chromosome = c # chromosome setter
+	def getChromosome(self): return self.__chromosome # chromosome getter
+	def getFitness(self, t):
+		# gets the fitness of current entity --> how close am i to the target?
+		fitness = 0
+		for a, b in zip(self.__chromosome, t):
+			if(a != b): fitness += 1
+		return fitness
+	def mutate(self, g): return random.choice(g) # get a mutation (random new char from gene pool)
+	def newGenome(self, t):
+		# gets a new genome sequence
+		g = list()
+		for i in range(len(t)): g.append(self.mutate())
+		return g
+	def nextGen(self, other):
+		# gets child of this and other
+		global vars
+		c = list()
+		for a, b in zip(self.chromosome, other.chromosome):
+			weight = random.random()
+			if(weight < vars["LOWER_BOUND"]): c.append(a)
+			elif(weight < vars["UPPER_BOUND"]): c.append(b)
+			else: c.append(self.mutate())
+		return Entity(c)
+
 
 def line(): return f"\n{'='*50}\n" # for formatting
 
@@ -25,8 +42,10 @@ try:
 		if(userInput != "e" and not os.path.isfile(userInput)): print(f"{userInput} is not a valid file")
 
 	if(userInput == "e"): sys.exit(1)
+	subsetFile = userInput
 
 	rawEdges = readFile("input.txt", True)
+	subset = readFile(subsetFile)
 	edges = list()
 	count = 0
 	vCount = 0

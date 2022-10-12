@@ -14,7 +14,9 @@ notes:
 """
 
 
-def pout(command): return os.system(command)
+def pout(command):
+	p = subprocess.run(command)
+	return p.returncode
 
 venv = "app-env"
 newVenv = False
@@ -36,8 +38,9 @@ if(newVenv):
 	depens = readFile("dependencies.gm", True)
 	for d in depens: pout(f"{command} && {pycall} -m pip install {d}")
 
-with open("codes.json") as file: codes = loads(file.read())
+#with open("codes.json") as file: codes = loads(file.read())
+codes = readJSON("codes.json")
 ret = str(pout(f"{command} && {pycall} main.py"))
 
 if ret in codes: print(codes[ret])
-else: print(f"ERROR: RETURN VALUE {ret} NOT RECOGNIZED --> PLEASE DEFINE IT IN CODES.JSON")
+else: print(f"ERROR: RETURN VALUE {ret} NOT RECOGNIZED --> PLEASE DEFINE IT IN CODES.JSON WITH CODER.PY")

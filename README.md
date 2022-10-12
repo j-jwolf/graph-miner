@@ -6,7 +6,7 @@
 2. Directory Contents
 
 ### 1. Instructions
-**RUN LAUNCHER.PY, NOTHING ELSE**
+**ONLY RUN LAUNCHER.PY OR CODER.PY**
 
 Make sure you do not install a virtual environment. launcher.py will install the venv and the dependencies
 **DEPENDENCIES CAN ONLY BE PIP**
@@ -15,8 +15,7 @@ Make sure you do not install a virtual environment. launcher.py will install the
 
 #### Python Files
 1. Launcher.py
-	- Installs virtual environment and its dependencies
-	- Prints defined exit codes from main.py
+	- Installs virtual environment and its dependencies and prints defined exit codes from main.py
 2. Main.py
 	- File that the main program will be run on
 3. Utils.py

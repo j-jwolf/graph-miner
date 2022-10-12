@@ -1,6 +1,6 @@
 {
-	"0": "Exiting with no errors",
-	"1": "User exited program",
-	"-1": "General exception caught",
-	"-2": "Exiting due to keyboard interrupt"
+    "0": "Exiting with no errors",
+    "1": "User exited program",
+    "-1": "General exception caught",
+    "-2": "Exiting due to keyboard interrupt"
 }
