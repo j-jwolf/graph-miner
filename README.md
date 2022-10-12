@@ -8,9 +8,8 @@
 ### 1. Instructions
 **RUN LAUNCHER.PY, NOTHING ELSE**
 
-Make sure you do not install a virtual environment. launcher.py will install the venv and the dependencies.
-
 **DEPENDENCIES CAN ONLY BE PIP**
+Make sure you do not install a virtual environment. launcher.py will install the venv and the dependencies.
 
 ### 2. Directory Contents
 
