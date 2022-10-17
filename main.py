@@ -2,9 +2,11 @@ import os, sys, igraph, random
 from utils import *
 
 class Individual:
-	POP_SIZE = 100
+	POP_SIZE = 100 # size of each generation
+	# class method -> gets random edge from input file
 	@classmethod
-	def mutate(cls, edges, genome): return random.choice(edges)
+	def mutate(cls, edges): return random.choice(edges)
+	# checks if path in individual goes from point a to point b
 	def isValid(self):
 		global allPaths
 		nodes = set()
@@ -13,7 +15,10 @@ class Individual:
 			nodes.add(tup[1])
 		nodes = list(nodes)
 		nodes.sort()
-		return nodes in allPaths or Individual.isSubset(nodes, allPaths)
+		#return nodes in allPaths or Individual.isSubset(nodes, allPaths)
+		if nodes in allPaths: return True
+		...
+	# checks if b is a subset of a (a: nodes, b: paths)
 	@classmethod
 	def isSubset(cls, nodes, paths):
 		count = 0
@@ -26,6 +31,7 @@ class Individual:
 		if(not found): return found
 		...
 		return found
+	# constructor -> c: chromosome, source: point a, target: b
 	def __init__(self, c, source, target):
 		self.__chromosome = c
 		self.__source = source
@@ -33,27 +39,27 @@ class Individual:
 	def setChromosome(self, c): self.__chromosome = c
 	def setSource(self, source): self.__source = source
 	def setTarget(self, target): self.__target = target
-	def getChromosome(self): return self.__chromosome
+	def getChromosome(self): return list(set(self.__chromosome))
 	def getSource(self): return self.__source
 	def getTarget(self): return self.__target
+	# calculates the individuals fitness -> how many nodes in the path? lower == better
 	def fitness(self):
-		if(self.isValid()): return len(self.__chromosome)
+		if(self.isValid()): return len(set(self.__chromosome))
 		return sys.maxsize
+	# crosses this individual with another, returns their child
 	def crossover(self, other):
 		global TARGET
 		probs = [0.45, 0.9]
 		child = list()
-		#for i in range(random.randint(TARGET-3, TARGET)):
-		#n = random.randint(int(TARGET/3), TARGET)
-		#TARGET = n
-		n = random.randint(1, TARGET)
-		for i in range(n):
+		#n = random.randint(TARGET-1, TARGET)
+		for i in range(TARGET):
 			weight = random.random()
 			if(weight < probs[0]): child.append(random.choice(self.__chromosome))
 			elif(weight < probs[1]): child.append(random.choice(other.__chromosome))
-			else: child.append(Individual.mutate(edges, child))
+			else: child.append(Individual.mutate(edges))
 		return Individual(child, self.__source, self.__target)
 
+#=========================================================================================== debugging shit ======================================================================================
 class Node:
 	def __init__(self, data, next):
 		self.__data = data
@@ -96,7 +102,10 @@ class Writer:
 		except KeyboardInterrupt: sys.exit()
 		except Exception as e: print(e)
 		return False
+#=================================================================================================================================================================================================
 
+#=============================================================================================== deprecated ======================================================================================
+#											     at least i think so
 def getRandom(p, weight):
 	# p: population
 	valid = False
@@ -110,7 +119,7 @@ def newGenome(edges):
 	genome = list()
 	count = 0
 	while(count < TARGET):
-		genome.append(Individual.mutate(edges, genome))
+		genome.append(Individual.mutate(edges))
 		count += 1
 	return genome
 def isValidPath(path, source, target):
@@ -173,7 +182,9 @@ def writeAllPaths(paths):
 	for path in paths: writer.append(f"\n{str(path)}")
 	writer.dump("output.txt")
 	return
+#=================================================================================================================================================================================================
 
+# building the graph from input file
 inputFile = "input.txt"
 rawEdges = readFile(inputFile, True)
 edges = list()
@@ -197,35 +208,27 @@ for _i in range(len(verts)):
 	graph.vs[_i]["label"] = str(_i)
 graph.add_edges(edges)
 
-TARGET = len(edges)
-START = len(edges)
-CARRYOVER = 10
-CROSSOVER = 50
-a = 0
-b = 14
-cutoff = 50
-
+# initializing GA variables
+TARGET = len(edges) # number of edges in graph
+CARRYOVER = 10 # percent of fittest individuals that makes it to the next generation
+CROSSOVER = 50 # percent of fittest individuals whose children makes it to next generation
+a = 0 # debug -> starting node
+b = 14 # debug -> ending node
+cutoff = 50 # what generation is the last generation
 generation = 1
 pop = list()
-for _i in range(Individual.POP_SIZE): pop.append(Individual(newGenome(edges), a, b))
+for _i in range(Individual.POP_SIZE): pop.append(Individual(newGenome(edges), a, b)) # generating first generation
 
-#writeAllPaths(graph.get_all_simple_paths(a, b))
-allPaths = graph.get_all_simple_paths(a, b)
+allPaths = graph.get_all_simple_paths(a, b) # getting all (simple?) paths from starting node to ending node
 
 while(generation < cutoff):
-	#pop = sorted(pop, key = lambda entity : entity.fitness())
-	pop.sort(key = lambda entity : entity.fitness())
-	#if(pop[0].fitness() != sys.maxsize):
-		#if(TARGET > 1): TARGET 0-1
-	"""
-	if(isValidPath(pop[0].getChromosome(), pop[0].getSource(), pop[0].getTarget())):
-		print("pop[0] is valid")
-		if(TARGET > 1): TARGET -= 1
-	"""
+	pop.sort(key = lambda entity : entity.fitness()) # sort population by fitness
 	next = list()
-	s = int((CARRYOVER*Individual.POP_SIZE)/100)
+	# top ranking moves to next gen
+	rank = int((CARRYOVER*Individual.POP_SIZE)/100)
 	next.extend(pop[:s])
-	s = int((CROSSOVER*Individual.POP_SIZE)/100)
+	# crossing individuals over
+	rank = int((CROSSOVER*Individual.POP_SIZE)/100)
 	for _i in range(Individual.POP_SIZE-CARRYOVER):
 		valid = False
 		while(not valid):
@@ -236,22 +239,12 @@ while(generation < cutoff):
 			if(parents[0].fitness() != 0 and parents[1].fitness() != 0): valid = True
 		child = parents[0].crossover(parents[1])
 		next.append(child)
+	# population is now the next generation
 	pop = next
-	#m = getMin(pop)
-	#if(m.fitness() < TARGET): TARGET = m.fitness()
-	#pop.sort(key = lambda entity : entity.fitness())
-	#if(isValidPath(pop[0].getChromosome(), pop[0].getSource(), pop[0].getTarget())):
-	"""
-	if(checkPop(graph, pop)):
-		if(TARGET > 1): TARGET -= 1
-	else:
-		if(TARGET < START): TARGET += 1
-	"""
 	print(f"End of generation {generation}")
-	generation += 1
+	generation += 1 # increment generation
 
 pop.sort(key = lambda entity : entity.fitness())
 
-#print(f"Fittest individual: {pop[0].fitness()}\n\tIts chromosome: {pop[0].getChromosome()}")
 print(f"Fittest individual: {pop[0].fitness()}\nIts edges:")
 for edge in pop[0].getChromosome(): print(f"\n{edge}")
