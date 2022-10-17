@@ -1,5 +1,20 @@
+"""
+main.py --> where the magic happens
+
+to do:
+	1. UI shit
+		- add input for input file name, should be dynamic
+		- add inputs for source and target nodes
+		- (definitely john) document this better
+		- run through print statements and determine what should stay
+	2. other shit
+		- idk yet
+
+"""
+
 import os, sys, igraph, random
 from utils import *
+from shutil import rmtree # for deleting previous data in results folder
 
 class Individual:
 	POP_SIZE = 100 # size of each generation
@@ -34,7 +49,7 @@ class Individual:
 		if(not found): return found
 		...
 		return found
-	# constructor -> c: chromosome, source: point a, target: b
+	# constructor -> c: chromosome, source: starting node, target: node to find path to
 	def __init__(self, c, source, target):
 		self.__chromosome = c
 		self.__source = source
@@ -54,8 +69,6 @@ class Individual:
 		global TARGET
 		probs = [0.45, 0.9]
 		child = list()
-		#n = random.randint(int(TARGET/3), TARGET)
-		#n = random.randint(TARGET-1, TARGET)
 		for i in range(TARGET):
 			weight = random.random()
 			if(weight < probs[0]): child.append(random.choice(self.__chromosome))
@@ -109,7 +122,7 @@ class Writer:
 #=================================================================================================================================================================================================
 
 #=============================================================================================== deprecated ======================================================================================
-#											     at least i think so
+"""
 def getRandom(p, weight):
 	# p: population
 	valid = False
@@ -118,29 +131,6 @@ def getRandom(p, weight):
 		entity = random.choice(p[:weight])
 		if(isValidPath(entity.getChromosome(), entity.getSource(), entity.getTarget())): valid = True
 	return entity
-def newGenome(edges):
-	#global TARGET
-	TARGET = random.randint(1, len(edges))
-	genome = list()
-	count = 0
-	while(count < TARGET):
-		genome.append(Individual.mutate(edges))
-		count += 1
-	return genome
-def isValidPath(path, source, target):
-	current = source
-	#visited = set()
-	count = 0
-	#while(current != target and len(visited) < len(path) and count < len(path)):
-	while(current != target and count < len(path)):
-		for edge in path:
-			#if(current in edge and not edge in visited):
-			if(current in edge):
-				if(current == edge[0]): current = edge[1]
-				else: current = edge[0]
-				#visited.add(edge)
-		count += 1
-	return current == target
 def getMin(p):
 	m = sys.maxsize
 	index = 0
@@ -151,12 +141,6 @@ def getMin(p):
 			index = count
 		count += 1
 	return p[index]
-def getNodes(path):
-	nodes = set()
-	for tup in path:
-		nodes.add(tup[0])
-		nodes.add(tup[1])
-	return list(nodes)
 def checkSubset(target, paths):
 	count = 0
 	found = False
@@ -187,7 +171,46 @@ def writeAllPaths(paths):
 	for path in paths: writer.append(f"\n{str(path)}")
 	writer.dump("output.txt")
 	return
+"""
 #=================================================================================================================================================================================================
+
+def getNodes(path):
+	nodes = set()
+	for tup in path:
+		nodes.add(tup[0])
+		nodes.add(tup[1])
+	return list(nodes)
+def isValidPath(path, source, target):
+	current = source
+	count = 0
+	while(current != target and count < len(path)):
+		for edge in path:
+			if(current in edge):
+				if(current == edge[0]): current = edge[1]
+				else: current = edge[0]
+		count += 1
+	return current == target
+def newGenome(edges):
+	TARGET = random.randint(1, len(edges))
+	genome = list()
+	count = 0
+	while(count < TARGET):
+		genome.append(Individual.mutate(edges))
+		count += 1
+	return genome
+def writeResult(graph, chromosome, count):
+	sub = graph.subgraph(getNodes(chromosome))
+	if(not os.path.isdir("results")): os.mkdir("results")
+	fn = f"results{os.path.sep}generation-{count}.png"
+	data = dict()
+	data["bbox"] = (400, 400)
+	data["margin"] = 30
+	data["vertex_color"] = "white"
+	data["vertex_size"] = 45
+	data["vertex_label_size"] = 22
+	data["edge_curved"] = False
+	data["layout"] = graph.layout()
+	igraph.plot(sub, fn, **data)
 
 # building the graph from input file
 inputFile = "input.txt"
@@ -206,11 +229,13 @@ for line in rawEdges:
 	else: pass
 	count += 1
 
+if(os.path.isdir("results")): rmtree("results")
+
 graph = igraph.Graph(directed = False)
 graph.add_vertices(len(verts))
-for _i in range(len(verts)):
-	graph.vs[_i]["id"] = _i
-	graph.vs[_i]["label"] = str(_i)
+for i in range(len(verts)):
+	graph.vs[i]["id"] = i
+	graph.vs[i]["label"] = str(i)
 graph.add_edges(edges)
 
 # initializing GA variables
@@ -219,7 +244,7 @@ CARRYOVER = 10 # percent of fittest individuals that makes it to the next genera
 CROSSOVER = 50 # percent of fittest individuals whose children makes it to next generation
 a = 0 # debug -> starting node
 b = 14 # debug -> ending node
-cutoff = 500 # what generation is the last generation
+cutoff = 1000 # what generation is the last generation
 generation = 1
 pop = list()
 for _i in range(Individual.POP_SIZE): pop.append(Individual(newGenome(edges), a, b)) # generating first generation
@@ -246,10 +271,11 @@ while(generation < cutoff):
 		next.append(child)
 	# population is now the next generation
 	pop = next
+	pop.sort(key = lambda entity : entity.fitness())
+	writeResult(graph, pop[0].getChromosome(), generation)
 	print(f"End of generation {generation}")
 	generation += 1 # increment generation
 
-pop.sort(key = lambda entity : entity.fitness())
-
 print(f"Fittest individual: {pop[0].fitness()}\nIts edges:")
 for edge in pop[0].getChromosome(): print(f"\n{edge}")
+print(f"Results of fittest individual were written to results{os.path.sep}")
