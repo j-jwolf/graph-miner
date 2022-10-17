@@ -8,6 +8,7 @@ class Individual:
 	def mutate(cls, edges): return random.choice(edges)
 	# checks if path in individual goes from point a to point b
 	def isValid(self):
+		return isValidPath(self.__chromosome, self.__source, self.__target)
 		global allPaths
 		nodes = set()
 		for tup in self.__chromosome:
@@ -16,8 +17,10 @@ class Individual:
 		nodes = list(nodes)
 		nodes.sort()
 		#return nodes in allPaths or Individual.isSubset(nodes, allPaths)
-		if nodes in allPaths: return True
-		...
+		#if nodes in allPaths: return True
+		global graph
+		print(graph.get_subisomorphisms_vf2(graph.subgraph(nodes)))
+		sys.exit()
 	# checks if b is a subset of a (a: nodes, b: paths)
 	@classmethod
 	def isSubset(cls, nodes, paths):
@@ -51,6 +54,7 @@ class Individual:
 		global TARGET
 		probs = [0.45, 0.9]
 		child = list()
+		#n = random.randint(int(TARGET/3), TARGET)
 		#n = random.randint(TARGET-1, TARGET)
 		for i in range(TARGET):
 			weight = random.random()
@@ -115,7 +119,8 @@ def getRandom(p, weight):
 		if(isValidPath(entity.getChromosome(), entity.getSource(), entity.getTarget())): valid = True
 	return entity
 def newGenome(edges):
-	global TARGET
+	#global TARGET
+	TARGET = random.randint(1, len(edges))
 	genome = list()
 	count = 0
 	while(count < TARGET):
@@ -123,7 +128,7 @@ def newGenome(edges):
 		count += 1
 	return genome
 def isValidPath(path, source, target):
-	current = a
+	current = source
 	#visited = set()
 	count = 0
 	#while(current != target and len(visited) < len(path) and count < len(path)):
@@ -214,7 +219,7 @@ CARRYOVER = 10 # percent of fittest individuals that makes it to the next genera
 CROSSOVER = 50 # percent of fittest individuals whose children makes it to next generation
 a = 0 # debug -> starting node
 b = 14 # debug -> ending node
-cutoff = 50 # what generation is the last generation
+cutoff = 500 # what generation is the last generation
 generation = 1
 pop = list()
 for _i in range(Individual.POP_SIZE): pop.append(Individual(newGenome(edges), a, b)) # generating first generation
@@ -226,7 +231,7 @@ while(generation < cutoff):
 	next = list()
 	# top ranking moves to next gen
 	rank = int((CARRYOVER*Individual.POP_SIZE)/100)
-	next.extend(pop[:s])
+	next.extend(pop[:rank])
 	# crossing individuals over
 	rank = int((CROSSOVER*Individual.POP_SIZE)/100)
 	for _i in range(Individual.POP_SIZE-CARRYOVER):
