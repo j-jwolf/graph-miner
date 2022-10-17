@@ -5,3 +5,5 @@ test/
 test.*
 __pycache__/
 coder.py
+example.py
+old-main.py
