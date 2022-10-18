@@ -4,16 +4,19 @@ main.py --> where the magic happens
 to do:
 	1. UI shit
 		- add input for input file name, should be dynamic
-		- add inputs for source and target nodes
+		- add inputs for source and target nodes x
 		- (definitely john) document this better
 		- run through print statements and determine what should stay
 	2. other shit
 		- idk yet
+		- add flag and argument system x
+
+!!! update readme to reflect changes as you go !!!
 
 """
 
 import os, sys, igraph, random
-from utils import *
+from utils import * # read/write file functions
 from shutil import rmtree # for deleting previous data in results folder
 
 class Individual:
@@ -22,33 +25,7 @@ class Individual:
 	@classmethod
 	def mutate(cls, edges): return random.choice(edges)
 	# checks if path in individual goes from point a to point b
-	def isValid(self):
-		return isValidPath(self.__chromosome, self.__source, self.__target)
-		global allPaths
-		nodes = set()
-		for tup in self.__chromosome:
-			nodes.add(tup[0])
-			nodes.add(tup[1])
-		nodes = list(nodes)
-		nodes.sort()
-		#return nodes in allPaths or Individual.isSubset(nodes, allPaths)
-		#if nodes in allPaths: return True
-		global graph
-		print(graph.get_subisomorphisms_vf2(graph.subgraph(nodes)))
-		sys.exit()
-	# checks if b is a subset of a (a: nodes, b: paths)
-	@classmethod
-	def isSubset(cls, nodes, paths):
-		count = 0
-		found = False
-		a = set(nodes)
-		while(count < len(paths) and not found):
-			b = set(paths[count])
-			if(b.issubset(a)): found = True
-			count += 1
-		if(not found): return found
-		...
-		return found
+	def isValid(self): return isValidPath(self.__chromosome, self.__source, self.__target)
 	# constructor -> c: chromosome, source: starting node, target: node to find path to
 	def __init__(self, c, source, target):
 		self.__chromosome = c
@@ -73,131 +50,63 @@ class Individual:
 			weight = random.random()
 			if(weight < probs[0]): child.append(random.choice(self.__chromosome))
 			elif(weight < probs[1]): child.append(random.choice(other.__chromosome))
-			else: child.append(Individual.mutate(edges))
+			else:
+				weight = random.randint(0, 100)
+				if(weight < 30): pass
+				else: child.append(Individual.mutate(edges))
 		return Individual(child, self.__source, self.__target)
 
-#=========================================================================================== debugging shit ======================================================================================
-class Node:
-	def __init__(self, data, next):
-		self.__data = data
-		self.__next = next
-	def setData(self, data): self.__data = data
-	def setNext(self, next): self.__next = next
-	def getData(self): return self.__data
-	def getNext(self): return self.__next
-
-class Stack:
-	def __init__(self): self.__head = None
-	def push(self, obj):
-		if self.__headnext is None: next = None
-		else: next = self.__head
-		self.__head = Node(obj, next)
-	def pop(self):
-		if self.__head is None: return None
-		data = self.__head.getData()
-		self.__head = self.__head.getNext()
-		return data
-	def peek(self):
-		if self.__head is None: return None
-		return self.__head.getData()
-
-class Writer:
-	def __init__(self): self.__buffer = ""
-	def append(self, s):
-		if(type(s) != type("")):
-			try: self.__buffer += str(s)
-			except KeyboardInterrupt: sys.exit()
-			except Exception: print(f"{s} is cannot be converted to string")
-		else: self.__buffer += s
-	def dump(self, fn):
-		try:
-			if(os.path.isfile(fn)): mode = "a"
-			else: mode = "a"
-			with open(fn, mode) as file: file.write(self.__buffer)
-			self.__buffer = ""
-			return True
-		except KeyboardInterrupt: sys.exit()
-		except Exception as e: print(e)
-		return False
-#=================================================================================================================================================================================================
-
-#=============================================================================================== deprecated ======================================================================================
-"""
-def getRandom(p, weight):
-	# p: population
-	valid = False
-	entity = None
-	while(not valid):
-		entity = random.choice(p[:weight])
-		if(isValidPath(entity.getChromosome(), entity.getSource(), entity.getTarget())): valid = True
-	return entity
-def getMin(p):
-	m = sys.maxsize
-	index = 0
-	count = 0
-	for e in p:
-		if(e.fitness() < m):
-			m = e.fitness()
-			index = count
-		count += 1
-	return p[index]
-def checkSubset(target, paths):
-	count = 0
-	found = False
-	a = set(target)
-	while(count < len(paths) and not found):
-		b = set(paths[count])
-		if(b.issubset(a)): found = True
-		count += 1
-	return found
-def checkPop(graph, pop):
-	allPaths = graph.get_all_simple_paths(pop[0].getSource(), pop[0].getTarget())
-	count = 0
-	found = False
-	writer = Writer()
-	while(count < len(pop) and not found):
-		# path = all nodes in path
-		path = getNodes(pop[count].getChromosome())
-		path.sort()
-		if path in allPaths: found = True
-		else: found = checkSubset(path, allPaths)
-		writer.append(f"\n{path} in allPaths?: {found}")
-		count += 1
-	writer.dump("output.txt")
-	return found
-def writeAllPaths(paths):
-	writer = Writer()
-	writer.append("ALL PATHS:")
-	for path in paths: writer.append(f"\n{str(path)}")
-	writer.dump("output.txt")
-	return
-"""
-#=================================================================================================================================================================================================
-
+# gets all the nodes in the path as a list
 def getNodes(path):
 	nodes = set()
 	for tup in path:
 		nodes.add(tup[0])
 		nodes.add(tup[1])
 	return list(nodes)
+# checks if the only element remaining contains both the source and target nodes --> allows for cutoff to happen if the nodes share an edge
+def checkSingle(edge, source, target): return source in edge and target in edge
+# deprecated, checks if the remaining edges contain the source and target nodes --> allows for cutoff if the nodes share an edge and there are two solutions remaining
+def checkDouble(edges, source, target):
+	a = edges[0]
+	b = edges[1]
+	if source in a and target in a: return a
+	if source in b and target in b: return b
+	return None
+# checks if the path contains both the source and target node --> cant be a valid path from a to b without a or b
+def endpoints(path, source, target):
+	found = False
+	tofind = [False, False]
+	count = 0
+	while(count < len(path) and not found):
+		if source in path[count]: tofind[0] = True
+		if target in path[count]: tofind[1] = True
+		found = tofind[0] and tofind[1]
+		count += 1
+	return found
+# search through the path to see if it is a valid path from a to b --> is this a connected path to a from b?
 def isValidPath(path, source, target):
+	if(len(path) == 1 and checkSingle(path[0], source, target)): return True
+	if(not endpoints(path, source, target)): return False
 	current = source
 	count = 0
-	while(current != target and count < len(path)):
+	#while(current != target and count < len(path)):
+	while(count < len(path)):
 		for edge in path:
 			if(current in edge):
 				if(current == edge[0]): current = edge[1]
 				else: current = edge[0]
 		count += 1
 	return current == target
+# creates a new random genome for the initial population
 def newGenome(edges):
-	TARGET = random.randint(1, len(edges))
+	TARGET = random.randint(1, len(edges)) # how long should my genome be?
 	genome = list()
 	count = 0
 	while(count < TARGET):
-		genome.append(Individual.mutate(edges))
+		genome.append(Individual.mutate(edges)) # add a random edge from all possible edges in input file
 		count += 1
 	return genome
+# writes result to file in results directory named generation-[whatever the generation is]
 def writeResult(graph, chromosome, count):
 	sub = graph.subgraph(getNodes(chromosome))
 	if(not os.path.isdir("results")): os.mkdir("results")
@@ -211,6 +120,51 @@ def writeResult(graph, chromosome, count):
 	data["edge_curved"] = False
 	data["layout"] = graph.layout()
 	igraph.plot(sub, fn, **data)
+# gets user inputs for which nodes to find a path between
+def getInputs():
+	inputs = ["", ""]
+	userInput = ""
+	valid = False
+	while(userInput != "e" and not valid):
+		userInput = input("Enter source node or e to exit: ")
+		if(userInput == "e"): pass
+		else:
+			try:
+				x = int(userInput)
+				if(x > -1):
+					inputs[0] = x
+					while(userInput != "e" and userInput == str(inputs[0]) and not valid):
+						userInput = input("Enter target node or e to exit: ")
+						if(userInput == "e"): pass
+						elif(userInput == inputs[0]): print("Source node cannot be the target node")
+						else:
+							try:
+								x = int(userInput)
+								if(x > -1):
+									inputs[1] = x
+									valid = True
+								else: print(f"{userInput} is not a valid positive integer")
+							except KeyboardInterrupt: sys.exit(2)
+							except ValueError: print(f"{userInput} is not a valid positive integer")
+							except Exception as e: print(e)
+				else: print(f"{userInput} is not a valid positive integer")
+			except KeyboardInterrupt: sys.exit(2)
+			except ValueError: print(f"{userInput} is not a valid positive integer")
+			except Exception as e: print(e)
+	if(userInput == "e"): sys.exit(1)
+	return inputs
+
+# setting flags
+minMode = "-min" in sys.argv
+quietMode = "-quiet" in sys.argv
+silentMode = "-silent" in sys.argv
+
+# getting input file name
+inputFile = ""
+while(not os.path.isfile(inputFile) and inputFile != "e"):
+	inputFile = input("Enter input file name or e to exit: ")
+	if(inputFile != "e" and not os.path.isfile(inputFile)): print(f"{inputFile} does not exist!")
+if(inputFile == "e"): sys.exit(1)
 
 # building the graph from input file
 inputFile = "input.txt"
@@ -229,8 +183,10 @@ for line in rawEdges:
 	else: pass
 	count += 1
 
+# deletes previous results
 if(os.path.isdir("results")): rmtree("results")
 
+# build the graph from input file
 graph = igraph.Graph(directed = False)
 graph.add_vertices(len(verts))
 for i in range(len(verts)):
@@ -242,18 +198,34 @@ graph.add_edges(edges)
 TARGET = len(edges) # number of edges in graph
 CARRYOVER = 10 # percent of fittest individuals that makes it to the next generation
 CROSSOVER = 50 # percent of fittest individuals whose children makes it to next generation
-a = 0 # debug -> starting node
-b = 14 # debug -> ending node
-cutoff = 1000 # what generation is the last generation
+
+# getting inputs for the source and target nodes
+inputs = getInputs()
+source = inputs[0]
+target = inputs[1]
+
+print("")
+
+cutoff = 1000 # what generation is the last generation, default value
+# checking for argument with different valid cutoff value
+for arg in sys.argv:
+	if(arg.startswith("cutoff:")):
+		try:
+			x = int(arg.split(":")[-1])
+			if(x > 0): cutoff = x
+			else: print(f"Cutoff must be at least one --> using default {cutoff} instead")
+		except KeyboardInterrupt: sys.exit(2)
+		except Exception: print(f"Cutoff argument invalid --> using default {cutoff} instead")
+
+# creating first generation
 generation = 1
 pop = list()
-for _i in range(Individual.POP_SIZE): pop.append(Individual(newGenome(edges), a, b)) # generating first generation
+for _i in range(Individual.POP_SIZE): pop.append(Individual(newGenome(edges), source, target)) # generating first generation
+lastBest = len(pop[0].getChromosome())
 
-allPaths = graph.get_all_simple_paths(a, b) # getting all (simple?) paths from starting node to ending node
-
-while(generation < cutoff):
+while(generation < cutoff and len(pop[0].getChromosome()) > 1):
 	pop.sort(key = lambda entity : entity.fitness()) # sort population by fitness
-	next = list()
+	next = list() # initialize next generation
 	# top ranking moves to next gen
 	rank = int((CARRYOVER*Individual.POP_SIZE)/100)
 	next.extend(pop[:rank])
@@ -272,10 +244,19 @@ while(generation < cutoff):
 	# population is now the next generation
 	pop = next
 	pop.sort(key = lambda entity : entity.fitness())
-	writeResult(graph, pop[0].getChromosome(), generation)
-	print(f"End of generation {generation}")
+	# checking if should write fittest path to image file
+	if(not minMode or minMode and len(pop[0].getChromosome()) < lastBest): writeResult(graph, pop[0].getChromosome(), generation)
+	# checking if this should print to console or not, depending on flags
+	if(not silentMode):
+		if(not quietMode): print(f"End of generation {generation+1}")
+		elif(quietMode and (generation+1) % 100 == 0): print(f"End of generation {generation+1}")
+	# updating last best fitness score
+	lastBest = len(pop[0].getChromosome())
 	generation += 1 # increment generation
 
-print(f"Fittest individual: {pop[0].fitness()}\nIts edges:")
-for edge in pop[0].getChromosome(): print(f"\n{edge}")
-print(f"Results of fittest individual were written to results{os.path.sep}")
+# printing results to console
+print("========================================================================================================================\n")
+print(f"Fittest individual after {generation} generations: {pop[0].fitness()}\n\nIts edges:")
+for edge in pop[0].getChromosome(): print(f"\t{edge}")
+print(f"\nResults of fittest individual were written to results{os.path.sep}")
+print(f"Source: {source}; Target: {target}")

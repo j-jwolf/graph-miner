@@ -34,12 +34,27 @@ def writeFile(data, fn, append = None):
 	except Exception as e: print(e)
 	return False
 def readJSON(fn):
+	"""
+	DEPRECATED
+	desc: reads a json file
+	args:
+		fn: filename
+	returns: json object if file exists, else None
+	"""
 	data = None
 	try:
 		with open(fn) as file: data = json.loads(file.read())
 	except Exception as e: print(e)
 	return data
 def writeJSON(data, fn):
+	"""
+	DEPRECATED
+	desc: writes to a json file
+	args:
+		data: json data
+		fn: filename
+	returns: true if successful, else false
+	"""
 	try:
 		with open(fn, "w") as file: file.write(json.dumps(data, indent = 4))
 		return True
@@ -47,6 +62,7 @@ def writeJSON(data, fn):
 	return False
 	return
 
+# prevents the file from being run, can only be imported as a module
 if(__name__ == "__main__"):
 	print("this file is intended to only be imported")
 	sys.exit()

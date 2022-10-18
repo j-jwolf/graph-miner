@@ -15,22 +15,23 @@ notes:
 
 """
 
-
+# process out --> runs command as process
 def pout(command, processInput = None):
-	if processInput is None: p = subprocess.run(command)
-	else:
-		p = subprocess.Popen(command, stdin = subprocess.PIPE)
-		output = p.communicate(input = processInput.encode())[0]
+	p = subprocess.run(command)
 	return p.returncode
+# clears screen
+def cls():
+	try:
+		if sys.platform in {"win32", "msys", "cygwin"}: os.system("cls")
+		else: os.system("clear")
+	except Exception as e: print(e) # just a precaution since this was not tested on mac or linux
 
-quickInput = ""
-if(len(sys.argv) > 1):
-	count = 0
-	while(quickInput == "" and count < len(sys.argv)):
-		if(os.path.isfile(sys.argv[count]) and not sys.argv[count].endswith(".py")): quickInput = sys.argv[count]
-		count += 1
-	print(f"DEBUG --> quickInput: {quickInput}")
-	#sys.exit()
+cls()
+
+print("========================================================================================================================\n")
+print("HW3 -> Graph Miner by John Wolf and Dan Acosta")
+print("\n========================================================================================================================")
+
 venv = "app-env"
 newVenv = False
 if sys.platform in {"win32", "msys", "cygwin"}:
@@ -42,19 +43,27 @@ else:
 	win = False
 	pycall = "python3"
 if(not os.path.isdir(venv)):
+	# virtual environment was not found
 	newVenv = True
 	os.system(f"{pycall} -m venv {venv}")
-if(win): command = "app-env\\Scripts\\activate.bat" # windows
-else: command = "source app-env/bin/activate" # not windows
+if(win): command = "app-env\\Scripts\\activate.bat" # windows command
+else: command = "source app-env/bin/activate" # not windows command
 if(newVenv):
+	# new environment was created --> installing dependencies in it
 	pout(f"{command} && {pycall} -m pip install --upgrade pip")
 	depens = readFile("dependencies.gm", True)
 	for d in depens: pout(f"{command} && {pycall} -m pip install {d}")
 
-#with open("codes.json") as file: codes = loads(file.read())
-codes = readJSON("codes.json")
-if(quickInput == ""): quickInput = None
-ret = str(pout(f"{command} && {pycall} main.py", quickInput))
+# gathering all arguments passed to this to pass to main.py
+flags = ""
+for arg in sys.argv:
+	if(arg != __file__ and arg != "-debug"): flags += f" {arg}"
 
-if ret in codes: print(codes[ret])
-else: print(f"ERROR: RETURN VALUE {ret} NOT RECOGNIZED --> PLEASE DEFINE IT IN CODES.JSON WITH CODER.PY")
+# run the program and get its return value
+ret = pout(f"{command} && {pycall} main.py{flags}")
+
+# these are pretty self explainatory
+if(ret == 0): print("Exiting with no errors")
+elif(ret == 1): print("User exited via menu")
+elif(ret == 2): print("Exiting on keyboard interrupt")
+else: print(f"Error code {ret} is undefined")

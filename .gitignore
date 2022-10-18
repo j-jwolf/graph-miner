@@ -7,3 +7,5 @@ __pycache__/
 coder.py
 example.py
 old-main.py
+*.json
+results/
