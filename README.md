@@ -50,9 +50,7 @@ There is currently 1 argument that is taken. Arguments are denoted with nameOfVa
 #### Data Files
 1. Dependencies.gm
 	- File containing the list of dependencies this application has. Make sure to update it if a new dependency is needed
-2. Codes.json
-	- File containing exit codes. Used for debugging
-3. Input.txt
+2. Input.txt
 	- File containing the input Dr. Kim gave us. Can be named anything, program asks for the name at run time
 
 ### 3. Dependencies
