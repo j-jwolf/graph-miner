@@ -1,8 +1,0 @@
-{
-	"POP_SIZE": 100,
-	"TARGET": "This is a really long test string!",
-	"LOWER_BOUND": 0.45,
-	"UPPER_BOUND": 0.9,
-	"CARRY_OVER": 10,
-	"CROSS_OVER": 50
-}
