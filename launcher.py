@@ -10,8 +10,7 @@ prints return values code in codes.json
 
 !!! pass input file as argument to skip the file name verification in main.py --> ex: python launcher.py input.txt !!!
 
-notes:
-	replace os.system with subprocess
+ARGUMENTS ARE DOCUMENTED IN MAIN.PY AND WITH MORE DETAIL IN README.MD
 
 """
 

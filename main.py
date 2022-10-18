@@ -1,17 +1,15 @@
 """
-main.py --> where the magic happens
 
-to do:
-	1. UI shit
-		- add input for input file name, should be dynamic
-		- add inputs for source and target nodes x
-		- (definitely john) document this better
-		- run through print statements and determine what should stay
-	2. other shit
-		- idk yet
-		- add flag and argument system x
+Responsible for running the genetic algorithm and writing its results
 
-!!! update readme to reflect changes as you go !!!
+Program arguments:
+	flags:
+		-min: minimum image output
+		-quiet: minimum console output
+		-silent: no console output other than results
+	arguments:
+		cutoff: tells the program how many generations to run [defaults to 1000]
+	THESE ARE DOCUMENTED BETTER IN README.MD
 
 """
 
@@ -48,9 +46,9 @@ class Individual:
 		child = list()
 		for i in range(TARGET):
 			weight = random.random()
-			if(weight < probs[0]): child.append(random.choice(self.__chromosome))
-			elif(weight < probs[1]): child.append(random.choice(other.__chromosome))
-			else:
+			if(weight < probs[0]): child.append(random.choice(self.__chromosome)) # inherits one element from this individual
+			elif(weight < probs[1]): child.append(random.choice(other.__chromosome)) # inherits one element from the other individual
+			else: # gets a new mutation from the edge pool instead of inheriting
 				weight = random.randint(0, 100)
 				if(weight < 30): pass
 				else: child.append(Individual.mutate(edges))
@@ -255,8 +253,10 @@ while(generation < cutoff and len(pop[0].getChromosome()) > 1):
 	generation += 1 # increment generation
 
 # printing results to console
+print("\n\n========================================================================================================================")
+print("RESULTS")
 print("========================================================================================================================\n")
+print(f"Source: {source} --> Target: {target}")
 print(f"Fittest individual after {generation} generations: {pop[0].fitness()}\n\nIts edges:")
 for edge in pop[0].getChromosome(): print(f"\t{edge}")
 print(f"\nResults of fittest individual were written to results{os.path.sep}")
-print(f"Source: {source}; Target: {target}")
